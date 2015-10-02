@@ -1,4 +1,5 @@
 var React = require('react');
+var LocalStorageMixin = require('react-localstorage');
 var CartStore = require('../stores/CartStore');
 var DataStore = require('../stores/DataStore');
 var Data = require('./Data.react');
@@ -17,6 +18,8 @@ function getCartState() {
 }
 
 var CartApp = React.createClass({
+  displayName: 'CartComponent',
+  mixins: [LocalStorageMixin],
   getInitialState: function() {
     return getCartState();
   },

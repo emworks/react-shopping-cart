@@ -22063,13 +22063,17 @@ module.exports = CartActions;
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
-var Button = React.createClass({displayName: "Button",
+var BuyButton = React.createClass({displayName: "BuyButton",
   buyAll: function(event) {
     var self = this;
+    // Sort Cart items by 'id'
     CartActions.sort('id');
+    // Here we can send data
+    // then Cart will be cleaned
     setTimeout(function(){
       console.log('Buy all:', self.props.items);
       alert('Got it!');
+      // Delete all items and hide Cart
       CartActions.clear();
       CartActions.updateCartVisible(false);
     }, 1);
@@ -22086,7 +22090,7 @@ var Button = React.createClass({displayName: "Button",
   }
 });
 
-module.exports = Button;
+module.exports = BuyButton;
 
 },{"../actions/CartActions":158,"react":153}],160:[function(require,module,exports){
 var React = require('react');
@@ -22171,7 +22175,7 @@ var CartStore = require('../stores/CartStore');
 var DataStore = require('../stores/DataStore');
 var Data = require('./Data.react');
 var Cart = require('./Cart.react');
-var Button = require('./Button.react');
+var BuyButton = require('./BuyButton.react');
 
 function getCartState() {
   return {
@@ -22205,7 +22209,7 @@ var CartApp = React.createClass({
         React.createElement(Cart, {items: this.state.cartItems, count: this.state.cartCount, 
               sort: this.state.cartSortOptions, total: this.state.cartTotal, 
               visible: this.state.cartVisible}), 
-        React.createElement(Button, {items: this.state.cartItems, cartvisible: this.state.cartVisible})
+        React.createElement(BuyButton, {items: this.state.cartItems, cartvisible: this.state.cartVisible})
       )
     );
   },
@@ -22216,7 +22220,7 @@ var CartApp = React.createClass({
 
 module.exports = CartApp;
 
-},{"../stores/CartStore":165,"../stores/DataStore":166,"./Button.react":159,"./Cart.react":160,"./Data.react":162,"react":153,"react-localstorage":7}],162:[function(require,module,exports){
+},{"../stores/CartStore":165,"../stores/DataStore":166,"./BuyButton.react":159,"./Cart.react":160,"./Data.react":162,"react":153,"react-localstorage":7}],162:[function(require,module,exports){
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
@@ -22283,63 +22287,130 @@ var EventEmitter = require('events').EventEmitter;
 var CartConstants = require('../constants/CartConstants');
 var _ = require('underscore');
 
-var _data = {},
-    _sort = {
-      key: 'id',    // Sorting key
-      order: 'asc'  // Sorting order
-    },
-    _cartVisible = false; // Cart without data is hidden
+var _storage = localStorage.getItem('Cart'),
 
+    /**
+     * Try to load Cart data from localStorage if it possible
+     * @type {Object}
+     */
+    _data = _storage && JSON.parse(_storage).cartItems || {},
+
+    /**
+     * Sorting options
+     * By default the key is 'id' and the order is ascending
+     * @type {Object}
+     */
+    _sort = {
+      key: 'id',
+      order: 'asc'
+    },
+
+    /**
+     * Check if Cart has data
+     * Then show it or hide
+     * @type {Boolean}
+     */
+    _cartVisible = getCount() ? true : false;
+
+/**
+ * Add item to Cart, update quantity and sort items
+ * @param {Number} id
+ * @param {Object} update
+ */
 function add(id, update) {
   update.quantity = id in _data ? _data[id].quantity + 1 : 1;
   _data[id] = _.extend({}, _data[id], update);
   sortByKey(_sort.key);
 }
 
-function removeItem(key) {
-  delete _data[key];
+/**
+ * Get Cart items count
+ * @return {Number}
+ */
+function getCount() {
+  return Object.keys(_data).length;
 }
 
+/**
+ * Sort Cart items
+ * @param {String} key Sorting key
+ */
 function sortByKey(key) {
+
+  // Set new sorting key
   _sort.key = key;
+
+  // Sort data in the ascending order
   _data = _.chain(_data)
     .sortBy(_sort.key)
     .value();
+
+  // Reverse result if the order set as descending
   if (_sort.order === 'desc') {
     _data.reverse();
   }
+
+  // Update data
   _data = _.chain(_data)
     .indexBy(_sort.key)
     .value();
 }
 
+/**
+ * Remove one item from Cart
+ * @param {Number} key
+ */
+function removeItem(key) {
+  delete _data[key];
+}
+
+/**
+ * Delete all items from Cart
+ */
 function clear() {
   _data = {};
 }
 
+/**
+ * Show/hide Cart
+ * @param {Boolean} cartVisible
+ */
 function setCartVisible(cartVisible) {
   _cartVisible = cartVisible;
 }
 
 var CartStore = _.extend({}, EventEmitter.prototype, {
+
+  /**
+   * Get Cart items object
+   * @return {Object}
+   */
   getCartItems: function() {
     return _data;
   },
+
   getCartCount: function() {
-    return Object.keys(_data).length;
+    return getCount();
   },
+
+  /**
+   * Get sorting options object
+   * @return {Object}
+   */
   getSortOptions: function() {
     return _sort;
   },
+
+  /**
+   * Get total price
+   * @return {Number}
+   */
   getCartTotal: function() {
-    var total = 0;
-    for(var item in _data){
-      if(_data.hasOwnProperty(item)){
-        total += _data[item].price * _data[item].quantity;
-      }
-    }
-    return total.toFixed(2);
+    return _.reduce(_data, function(memo, item) {
+        return memo + item.price;
+      }, 0).toFixed(2);
   },
+
   getCartVisible: function() {
     return _cartVisible;
   },
@@ -22364,11 +22435,17 @@ AppDispatcher.register(function(payload) {
       removeItem(action.key);
       break;
     case CartConstants.CART_SORT:
-      if (_sort.key === action.key) {
-        _sort.order = (_sort.order === 'asc') ? 'desc' : 'asc';
-      } else {
-        _sort.order = 'asc';
-      }
+
+      /**
+       * Update sorting order
+       * Toggle if the current sorting key is the same as the previous
+       * Set as ascending if the key has been changed
+       * @type {String}
+       */
+      _sort.order = (_sort.key === action.key && _sort.order === 'asc')
+        ? 'desc'
+        : 'asc';
+
       sortByKey(action.key);
       break;
     case CartConstants.CART_CLEAR:
@@ -22394,6 +22471,10 @@ var _ = require('underscore');
 
 var _data = {};
 
+/**
+ * Set data received from API
+ * @param  {Object} data
+ */
 function loadData(data) {
   _data = data;
 }
@@ -22435,7 +22516,10 @@ var request = require('superagent');
 var API = {
   // Load product data from json into Store via Action
   getData: function() {
-    request.get('data/data.json').end(function(error, response) {
+    // Fake data object
+    // It contains items with id, title and price
+    var data = 'data/data.json';
+    request.get(data).end(function(error, response) {
       if (!error) {
         var data = JSON.parse(response.text);
         CartActions.receiveData(data);

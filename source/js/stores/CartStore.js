@@ -3,30 +3,33 @@ var EventEmitter = require('events').EventEmitter;
 var CartConstants = require('../constants/CartConstants');
 var _ = require('underscore');
 
-var _storage = localStorage.getItem('Cart'),
+var _localStorageKey = 'Cart',
+    _storage = localStorage.getItem(_localStorageKey)
+              && JSON.parse(localStorage.getItem(_localStorageKey));
 
-    /**
-     * Try to load Cart data from localStorage if it possible
-     * @type {Object}
-     */
-    _data = _storage && JSON.parse(_storage).cartItems || {},
+/**
+ * Initialize Cart settings
+ * @type {Object}
+ */
+var _cart = {
 
-    /**
-     * Sorting options
-     * By default the key is 'id' and the order is ascending
-     * @type {Object}
-     */
-    _sort = {
-      key: 'id',
-      order: 'asc'
-    },
+  // Try to set Cart data from localStorage if it possible
+  // or define empty object
+  data: _storage && _storage.cartItems || {},
 
-    /**
-     * Check if Cart has data
-     * Then show it or hide
-     * @type {Boolean}
-     */
-    _cartVisible = getCount() ? true : false;
+  // Sorting options
+  // First try to set options from localStorage
+  // otherwise set default options (sort by 'id' in ascending order)
+  sort: _storage && _storage.cartSortOptions || {
+    key: 'id',
+    order: 'asc'
+  },
+
+  // Check if Cart has data
+  // then show it or hide
+  visible: _storage && _storage.cartCount ? true : false
+
+};
 
 /**
  * Add item to Cart, update quantity and sort items
@@ -34,9 +37,9 @@ var _storage = localStorage.getItem('Cart'),
  * @param {Object} update
  */
 function add(id, update) {
-  update.quantity = id in _data ? _data[id].quantity + 1 : 1;
-  _data[id] = _.extend({}, _data[id], update);
-  sortByKey(_sort.key);
+  update.quantity = id in _cart.data ? _cart.data[id].quantity + 1 : 1;
+  _cart.data[id] = _.extend({}, _cart.data[id], update);
+  sortByKey(_cart.sort.key);
 }
 
 /**
@@ -44,7 +47,7 @@ function add(id, update) {
  * @return {Number}
  */
 function getCount() {
-  return Object.keys(_data).length;
+  return Object.keys(_cart.data).length;
 }
 
 /**
@@ -54,21 +57,21 @@ function getCount() {
 function sortByKey(key) {
 
   // Set new sorting key
-  _sort.key = key;
+  _cart.sort.key = key;
 
   // Sort data in the ascending order
-  _data = _.chain(_data)
-    .sortBy(_sort.key)
+  _cart.data = _.chain(_cart.data)
+    .sortBy(_cart.sort.key)
     .value();
 
   // Reverse result if the order set as descending
-  if (_sort.order === 'desc') {
-    _data.reverse();
+  if (_cart.sort.order === 'desc') {
+    _cart.data.reverse();
   }
 
   // Update data
-  _data = _.chain(_data)
-    .indexBy(_sort.key)
+  _cart.data = _.chain(_cart.data)
+    .indexBy(_cart.sort.key)
     .value();
 }
 
@@ -77,14 +80,14 @@ function sortByKey(key) {
  * @param {Number} key
  */
 function removeItem(key) {
-  delete _data[key];
+  delete _cart.data[key];
 }
 
 /**
  * Delete all items from Cart
  */
 function clear() {
-  _data = {};
+  _cart.data = {};
 }
 
 /**
@@ -92,7 +95,7 @@ function clear() {
  * @param {Boolean} cartVisible
  */
 function setCartVisible(cartVisible) {
-  _cartVisible = cartVisible;
+  _cart.visible = cartVisible;
 }
 
 var CartStore = _.extend({}, EventEmitter.prototype, {
@@ -102,7 +105,7 @@ var CartStore = _.extend({}, EventEmitter.prototype, {
    * @return {Object}
    */
   getCartItems: function() {
-    return _data;
+    return _cart.data;
   },
 
   getCartCount: function() {
@@ -114,7 +117,7 @@ var CartStore = _.extend({}, EventEmitter.prototype, {
    * @return {Object}
    */
   getSortOptions: function() {
-    return _sort;
+    return _cart.sort;
   },
 
   /**
@@ -122,13 +125,13 @@ var CartStore = _.extend({}, EventEmitter.prototype, {
    * @return {Number}
    */
   getCartTotal: function() {
-    return _.reduce(_data, function(memo, item) {
+    return _.reduce(_cart.data, function(memo, item) {
         return memo + item.price;
       }, 0).toFixed(2);
   },
 
   getCartVisible: function() {
-    return _cartVisible;
+    return _cart.visible;
   },
   emitChange: function() {
     this.emit('change');
@@ -152,13 +155,13 @@ AppDispatcher.register(function(payload) {
       break;
     case CartConstants.CART_SORT:
 
-      /**
-       * Update sorting order
-       * Toggle if the current sorting key is the same as the previous
-       * Set as ascending if the key has been changed
-       * @type {String}
-       */
-      _sort.order = (_sort.key === action.key && _sort.order === 'asc')
+      // Check if the sorting key has not been changed
+      var sameKey = action.key === _cart.sort.key;
+
+      // Update sorting order
+      // Toggle if the current sorting key is the same as the previous
+      // Set as ascending if the key has been changed
+      _cart.sort.order = (sameKey && _cart.sort.order === 'asc')
         ? 'desc'
         : 'asc';
 

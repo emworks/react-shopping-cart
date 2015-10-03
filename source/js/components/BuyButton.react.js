@@ -1,13 +1,17 @@
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
-var Button = React.createClass({
+var BuyButton = React.createClass({
   buyAll: function(event) {
     var self = this;
+    // Sort Cart items by 'id'
     CartActions.sort('id');
+    // Here we can send data
+    // then Cart will be cleaned
     setTimeout(function(){
       console.log('Buy all:', self.props.items);
       alert('Got it!');
+      // Delete all items and hide Cart
       CartActions.clear();
       CartActions.updateCartVisible(false);
     }, 1);
@@ -24,4 +28,4 @@ var Button = React.createClass({
   }
 });
 
-module.exports = Button;
+module.exports = BuyButton;

@@ -4,7 +4,7 @@ var CartStore = require('../stores/CartStore');
 var DataStore = require('../stores/DataStore');
 var Data = require('./Data.react');
 var Cart = require('./Cart.react');
-var Button = require('./Button.react');
+var BuyButton = require('./BuyButton.react');
 
 function getCartState() {
   return {
@@ -38,7 +38,7 @@ var CartApp = React.createClass({
         <Cart items={this.state.cartItems} count={this.state.cartCount}
               sort={this.state.cartSortOptions} total={this.state.cartTotal}
               visible={this.state.cartVisible}/>
-        <Button items={this.state.cartItems} cartvisible={this.state.cartVisible}/>
+        <BuyButton items={this.state.cartItems} cartvisible={this.state.cartVisible}/>
       </div>
     );
   },

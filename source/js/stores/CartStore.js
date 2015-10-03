@@ -3,63 +3,130 @@ var EventEmitter = require('events').EventEmitter;
 var CartConstants = require('../constants/CartConstants');
 var _ = require('underscore');
 
-var _data = {},
-    _sort = {
-      key: 'id',    // Sorting key
-      order: 'asc'  // Sorting order
-    },
-    _cartVisible = false; // Cart without data is hidden
+var _storage = localStorage.getItem('Cart'),
 
+    /**
+     * Try to load Cart data from localStorage if it possible
+     * @type {Object}
+     */
+    _data = _storage && JSON.parse(_storage).cartItems || {},
+
+    /**
+     * Sorting options
+     * By default the key is 'id' and the order is ascending
+     * @type {Object}
+     */
+    _sort = {
+      key: 'id',
+      order: 'asc'
+    },
+
+    /**
+     * Check if Cart has data
+     * Then show it or hide
+     * @type {Boolean}
+     */
+    _cartVisible = getCount() ? true : false;
+
+/**
+ * Add item to Cart, update quantity and sort items
+ * @param {Number} id
+ * @param {Object} update
+ */
 function add(id, update) {
   update.quantity = id in _data ? _data[id].quantity + 1 : 1;
   _data[id] = _.extend({}, _data[id], update);
   sortByKey(_sort.key);
 }
 
-function removeItem(key) {
-  delete _data[key];
+/**
+ * Get Cart items count
+ * @return {Number}
+ */
+function getCount() {
+  return Object.keys(_data).length;
 }
 
+/**
+ * Sort Cart items
+ * @param {String} key Sorting key
+ */
 function sortByKey(key) {
+
+  // Set new sorting key
   _sort.key = key;
+
+  // Sort data in the ascending order
   _data = _.chain(_data)
     .sortBy(_sort.key)
     .value();
+
+  // Reverse result if the order set as descending
   if (_sort.order === 'desc') {
     _data.reverse();
   }
+
+  // Update data
   _data = _.chain(_data)
     .indexBy(_sort.key)
     .value();
 }
 
+/**
+ * Remove one item from Cart
+ * @param {Number} key
+ */
+function removeItem(key) {
+  delete _data[key];
+}
+
+/**
+ * Delete all items from Cart
+ */
 function clear() {
   _data = {};
 }
 
+/**
+ * Show/hide Cart
+ * @param {Boolean} cartVisible
+ */
 function setCartVisible(cartVisible) {
   _cartVisible = cartVisible;
 }
 
 var CartStore = _.extend({}, EventEmitter.prototype, {
+
+  /**
+   * Get Cart items object
+   * @return {Object}
+   */
   getCartItems: function() {
     return _data;
   },
+
   getCartCount: function() {
-    return Object.keys(_data).length;
+    return getCount();
   },
+
+  /**
+   * Get sorting options object
+   * @return {Object}
+   */
   getSortOptions: function() {
     return _sort;
   },
+
+  /**
+   * Get total price
+   * @return {Number}
+   */
   getCartTotal: function() {
-    var total = 0;
-    for(var item in _data){
-      if(_data.hasOwnProperty(item)){
-        total += _data[item].price * _data[item].quantity;
-      }
-    }
-    return total.toFixed(2);
+    return _.reduce(_data, function(memo, item) {
+        return memo + item.price;
+      }, 0).toFixed(2);
   },
+
   getCartVisible: function() {
     return _cartVisible;
   },
@@ -84,11 +151,17 @@ AppDispatcher.register(function(payload) {
       removeItem(action.key);
       break;
     case CartConstants.CART_SORT:
-      if (_sort.key === action.key) {
-        _sort.order = (_sort.order === 'asc') ? 'desc' : 'asc';
-      } else {
-        _sort.order = 'asc';
-      }
+
+      /**
+       * Update sorting order
+       * Toggle if the current sorting key is the same as the previous
+       * Set as ascending if the key has been changed
+       * @type {String}
+       */
+      _sort.order = (_sort.key === action.key && _sort.order === 'asc')
+        ? 'desc'
+        : 'asc';
+
       sortByKey(action.key);
       break;
     case CartConstants.CART_CLEAR:

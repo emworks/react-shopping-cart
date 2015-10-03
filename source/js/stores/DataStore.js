@@ -5,6 +5,10 @@ var _ = require('underscore');
 
 var _data = {};
 
+/**
+ * Set data received from API
+ * @param  {Object} data
+ */
 function loadData(data) {
   _data = data;
 }

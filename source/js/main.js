@@ -6,6 +6,6 @@ var CartApp = require('./components/CartApp.react');
 API.getData();
 
 React.render(
-  <CartApp />,
+  <CartApp localStorageKey='Cart' />,
   document.getElementById('main')
 );

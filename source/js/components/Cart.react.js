@@ -2,7 +2,8 @@ var React = require('react');
 var CartActions = require('../actions/CartActions');
 
 var Cart = React.createClass({
-  removeFromCart: function(key) {
+  displayName: 'Cart',
+  handleRemoveFromCart: function(key) {
     var self = this;
     setTimeout(function(){
       console.log('Remove from Cart:', self.props.items[key]);
@@ -10,7 +11,7 @@ var Cart = React.createClass({
       CartActions.updateCartVisible(!!self.props.count);
     }, 1);
   },
-  sortByKey: function(key) {
+  handleSortByKey: function(key) {
     CartActions.sort(key);
   },
   render: function() {
@@ -23,7 +24,7 @@ var Cart = React.createClass({
             <tr className="cart-row">
               <th className="cart-col">&nbsp;</th>
               <th className="cart-col">
-                <span onClick={this.sortByKey.bind(this, 'title')}
+                <span onClick={this.handleSortByKey.bind(this, 'title')}
                       className="cart-sort-switcher">
                   <span>Title</span>
                   <i className={this.props.sort.key === 'title'
@@ -32,7 +33,7 @@ var Cart = React.createClass({
                 </span>
               </th>
               <th className="cart-col ta-right">
-                <span onClick={this.sortByKey.bind(this, 'price')}
+                <span onClick={this.handleSortByKey.bind(this, 'price')}
                       className="cart-sort-switcher">
                   <span>Price</span>
                   <i className={this.props.sort.key === 'price'
@@ -50,7 +51,7 @@ var Cart = React.createClass({
                 <tr className="cart-row" key={key}>
                   <td className="cart-col ta-right">
                     <span className="cart-remove-btn" title="Remove"
-                            onClick={self.removeFromCart.bind(self, key)}>
+                            onClick={self.handleRemoveFromCart.bind(self, key)}>
                       <i className="fa fa-remove"></i>
                     </span>
                   </td>

@@ -2,7 +2,8 @@ var React = require('react');
 var CartActions = require('../actions/CartActions');
 
 var BuyButton = React.createClass({
-  buyAll: function(event) {
+  displayName: 'BuyButton',
+  handleBuyAll: function(event) {
     var self = this;
     // Sort Cart items by 'id'
     CartActions.sort('id');
@@ -20,7 +21,7 @@ var BuyButton = React.createClass({
     return (
       <div className={"ta-center cart-col" + (this.props.cartvisible ? '' : ' hidden')}>
         <a id="buy-btn" className="cart-btn" href="javascript:void(0)"
-            onClick={this.buyAll}  title="Buy">
+            onClick={this.handleBuyAll}  title="Buy">
           <i className="fa fa-shopping-cart fa-lg"></i>
         </a>
       </div>

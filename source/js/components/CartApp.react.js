@@ -18,7 +18,7 @@ function getCartState() {
 }
 
 var CartApp = React.createClass({
-  displayName: 'CartComponent',
+  displayName: 'CartApp',
   mixins: [LocalStorageMixin],
   getInitialState: function() {
     return getCartState();

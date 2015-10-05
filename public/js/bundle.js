@@ -22063,8 +22063,9 @@ module.exports = CartActions;
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
-var BuyButton = React.createClass({displayName: "BuyButton",
-  buyAll: function(event) {
+var BuyButton = React.createClass({
+  displayName: 'BuyButton',
+  handleBuyAll: function(event) {
     var self = this;
     // Sort Cart items by 'id'
     CartActions.sort('id');
@@ -22082,7 +22083,7 @@ var BuyButton = React.createClass({displayName: "BuyButton",
     return (
       React.createElement("div", {className: "ta-center cart-col" + (this.props.cartvisible ? '' : ' hidden')}, 
         React.createElement("a", {id: "buy-btn", className: "cart-btn", href: "javascript:void(0)", 
-            onClick: this.buyAll, title: "Buy"}, 
+            onClick: this.handleBuyAll, title: "Buy"}, 
           React.createElement("i", {className: "fa fa-shopping-cart fa-lg"})
         )
       )
@@ -22096,8 +22097,9 @@ module.exports = BuyButton;
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
-var Cart = React.createClass({displayName: "Cart",
-  removeFromCart: function(key) {
+var Cart = React.createClass({
+  displayName: 'Cart',
+  handleRemoveFromCart: function(key) {
     var self = this;
     setTimeout(function(){
       console.log('Remove from Cart:', self.props.items[key]);
@@ -22105,7 +22107,7 @@ var Cart = React.createClass({displayName: "Cart",
       CartActions.updateCartVisible(!!self.props.count);
     }, 1);
   },
-  sortByKey: function(key) {
+  handleSortByKey: function(key) {
     CartActions.sort(key);
   },
   render: function() {
@@ -22118,7 +22120,7 @@ var Cart = React.createClass({displayName: "Cart",
             React.createElement("tr", {className: "cart-row"}, 
               React.createElement("th", {className: "cart-col"}, " "), 
               React.createElement("th", {className: "cart-col"}, 
-                React.createElement("span", {onClick: this.sortByKey.bind(this, 'title'), 
+                React.createElement("span", {onClick: this.handleSortByKey.bind(this, 'title'), 
                       className: "cart-sort-switcher"}, 
                   React.createElement("span", null, "Title"), 
                   React.createElement("i", {className: this.props.sort.key === 'title'
@@ -22127,7 +22129,7 @@ var Cart = React.createClass({displayName: "Cart",
                 )
               ), 
               React.createElement("th", {className: "cart-col ta-right"}, 
-                React.createElement("span", {onClick: this.sortByKey.bind(this, 'price'), 
+                React.createElement("span", {onClick: this.handleSortByKey.bind(this, 'price'), 
                       className: "cart-sort-switcher"}, 
                   React.createElement("span", null, "Price"), 
                   React.createElement("i", {className: this.props.sort.key === 'price'
@@ -22145,7 +22147,7 @@ var Cart = React.createClass({displayName: "Cart",
                 React.createElement("tr", {className: "cart-row", key: key}, 
                   React.createElement("td", {className: "cart-col ta-right"}, 
                     React.createElement("span", {className: "cart-remove-btn", title: "Remove", 
-                            onClick: self.removeFromCart.bind(self, key)}, 
+                            onClick: self.handleRemoveFromCart.bind(self, key)}, 
                       React.createElement("i", {className: "fa fa-remove"})
                     )
                   ), 
@@ -22189,7 +22191,7 @@ function getCartState() {
 }
 
 var CartApp = React.createClass({
-  displayName: 'CartComponent',
+  displayName: 'CartApp',
   mixins: [LocalStorageMixin],
   getInitialState: function() {
     return getCartState();
@@ -22224,8 +22226,9 @@ module.exports = CartApp;
 var React = require('react');
 var CartActions = require('../actions/CartActions');
 
-var Data = React.createClass({displayName: "Data",
-  addToCart: function(event) {
+var Data = React.createClass({
+  displayName: 'Data',
+  handleAddToCart: function(event) {
     var items = this.props.items;
     var item = items[Math.floor(Math.random() * items.length)];
     var update = {
@@ -22241,7 +22244,7 @@ var Data = React.createClass({displayName: "Data",
     return (
       React.createElement("div", {className: "ta-center" + (this.props.cartvisible ? ' cart-col' : '')}, 
         React.createElement("a", {id: "add-to-cart", className: "cart-btn", href: "javascript:void(0)", 
-          onClick: this.addToCart, title: "Add something to Cart"}, 
+          onClick: this.handleAddToCart, title: "Add something to Cart"}, 
           React.createElement("i", {className: "fa fa-magic fa-lg"}), 
           React.createElement("span", {className: this.props.cartvisible ? 'hidden' : ''}, 
             " Apply some magic"
